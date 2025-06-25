@@ -2,6 +2,7 @@ from tabulate import tabulate
 
 # -------------------- Constants and Unit Conversions --------------------
 
+# Supported units and their base conversions
 UNIT_CONVERSIONS = {
     'g': 1, 'gram': 1, 'grams': 1,
     'kg': 1000, 'kilogram': 1000, 'kilograms': 1000,
@@ -12,13 +13,13 @@ UNIT_CONVERSIONS = {
     'unit': 1, 'units': 1, 'count': 1, 'piece': 1, 'pieces': 1
 }
 
-
 # -------------------- Functions --------------------
 
+# Adds a heading with decoration
 def make_statement(statement, decoration):
     print(f"{decoration * 3} {statement} {decoration * 3}\n")
 
-
+# Checks if the response is yes or no
 def string_check(question, valid_answers=('yes', 'no'), num_letters=1):
     while True:
         response = input(question + " ").lower().strip()
@@ -28,7 +29,7 @@ def string_check(question, valid_answers=('yes', 'no'), num_letters=1):
                 return item
         print(f"Please choose an option from {valid_answers}\n")
 
-
+# Prints instructions for the user
 def instructions():
     make_statement("Instructions", "ℹ️")
     print('''
@@ -49,14 +50,14 @@ Valid units:
 Enter 'xxx' to stop adding ingredients.
 ''')
 
-
+# Converts any unit to its base form (g or ml)
 def convert_to_base(amount, unit):
     unit = unit.lower().strip()
     if unit in UNIT_CONVERSIONS:
         return amount * UNIT_CONVERSIONS[unit], unit
     return None, unit
 
-
+# Gets a valid unit from the user
 def get_unit_input(prompt):
     while True:
         unit = input(prompt + " ").strip().lower()
@@ -65,7 +66,7 @@ def get_unit_input(prompt):
             return unit
         print("❌ Unknown unit. Try g, ml, kg, l, tbsp, tsp, or unit.\n")
 
-
+# Gets a valid number > 0 from the user
 def get_amount_input(prompt):
     while True:
         response = input(prompt + " ").strip()
@@ -78,7 +79,7 @@ def get_amount_input(prompt):
         except:
             print("❌ Invalid number. Use digits or fractions like 1/2.\n")
 
-
+# Gets a whole number 1 or more
 def positive_int(prompt):
     while True:
         response = input(prompt + " ").strip()
@@ -87,13 +88,14 @@ def positive_int(prompt):
             return int(response)
         print("❌ Enter a whole number (1 or more).\n")
 
-
+# Gathers ingredient info, calculates total and stores per-item costs
 def calculate_cost_with_units():
     total_cost = 0
     ingredient_list = []
     ingredient_num = 1
 
     while True:
+        # Get ingredient name
         while True:
             ingredient = input(f"📝 Ingredient #{ingredient_num} name: ").strip()
             print()
@@ -106,16 +108,18 @@ def calculate_cost_with_units():
             else:
                 break
 
+        # Get all inputs for the ingredient
         unit = get_unit_input(f"📐 Enter the unit for {ingredient} (e.g., g, ml, kg, tbsp, unit):")
         amount_used = get_amount_input(f"📏 Amount of {ingredient} used (in {unit}):")
         amount_purchased = get_amount_input(f"📦 Amount of {ingredient} purchased (in {unit}):")
         cost_purchased = get_amount_input(f"💵 Cost of purchased amount ($):")
 
+        # Convert units and calculate cost
         converted_used, _ = convert_to_base(amount_used, unit)
         converted_purchase, _ = convert_to_base(amount_purchased, unit)
         cost_used = (converted_used / converted_purchase) * cost_purchased
-        cost_per_serving = 0  # Will calculate later
 
+        # Add ingredient to the list
         total_cost += cost_used
         ingredient_list.append({
             "name": ingredient,
@@ -126,7 +130,7 @@ def calculate_cost_with_units():
 
         ingredient_num += 1
 
-
+# Displays the full summary and formatted table
 def display_summary(recipe_name, servings, total_cost, ingredients):
     cost_per_serving = total_cost / servings if servings else 0
     print("\n" + "=" * 60)
@@ -136,9 +140,11 @@ def display_summary(recipe_name, servings, total_cost, ingredients):
     print(f"🧾 Cost per Serving: ${cost_per_serving:.2f}")
     print("=" * 60)
 
+    # Add cost per serving for each ingredient
     for item in ingredients:
         item['cost_per_serving'] = item['total_cost'] / servings
 
+    # Create and print table
     table_data = [
         [item["name"], item["amount_used"], f"${item['total_cost']:.2f}", f"${item['cost_per_serving']:.2f}"]
         for item in ingredients
@@ -150,14 +156,16 @@ def display_summary(recipe_name, servings, total_cost, ingredients):
         tablefmt="fancy_grid"
     ))
 
-
 # -------------------- Main Routine --------------------
 
+# Title
 make_statement("Recipe Cost Calculator", "💲")
 
+# Show instructions if needed
 if string_check("Do you want to see the instructions? ") == "yes":
     instructions()
 
+# Get recipe name
 while True:
     recipe_name = input("🍳 Enter the recipe name: ").strip()
     print()
@@ -165,8 +173,10 @@ while True:
         break
     print("❌ Recipe name cannot be blank.\n")
 
+# Get servings
 servings = positive_int("🍽️ How many servings does this recipe make?")
 print()
 
+# Run calculator and display final result
 total_cost, ingredients = calculate_cost_with_units()
 display_summary(recipe_name, servings, total_cost, ingredients)
